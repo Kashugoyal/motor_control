@@ -58,10 +58,13 @@ A basic flowchart for the operation is given below.
 ### 4. Charts
 * __Current test__
 <img src="https://github.com/Kashugoyal/motor_control/blob/master/images/final.jpg?raw=true" width=70% align="center"/>
+
 * __Step Trajectory__
 <img src="https://github.com/Kashugoyal/motor_control/blob/master/images/track_step.jpg?raw=true" width=70% align="center"/>
+
 * __Cubic Trajetory__
 <img src="https://github.com/Kashugoyal/motor_control/blob/master/images/final_cubi.jpg?raw=true" width=70% align="center"/>
+
 > Blue line is the plot for desired values while orange is the obtained set of values. 
 
 ### 5. References

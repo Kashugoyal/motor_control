@@ -15,9 +15,9 @@
 
 #define PLOTPTS 200
 #define DECIMATION 10
-#define NUMSAMPS 100
 
-static volatile int Waveform[NUMSAMPS];
+
+
 static volatile int ref[NUMSAMPS];
 static volatile int StoringData = 0;
 static volatile float kp=1.30, ki=0.06;
@@ -185,7 +185,7 @@ void __ISR(_TIMER_4_VECTOR, IPL4SOFT) motorController(void)
         }
         break;
       }
-      
+
       case TRACK:
       {
 
@@ -286,34 +286,6 @@ void __ISR(_TIMER_4_VECTOR, IPL4SOFT) motorController(void)
     NU32_ReadUART3(buffer,BUF_SIZE); // we expect the next character to be a menu command
     NU32_LED2 = 1;                   // clear the error LED
     switch (buffer[0]) {
-      case 'd':                      // dummy command for demonstration purposes
-      {
-        // temp = encoder_counts();
-        // deg = (temp-32768) * 0.2;
-        deg = (encoder_counts() - 32768) * 0.2;
-        sprintf(buffer,"%d\r\n", deg);
-        NU32_WriteUART3(buffer); // send encoder count to client
-        break;
-      }
-      case 'c':
-      {
-        sprintf(buffer,"%d\r\n", encoder_counts());
-        NU32_WriteUART3(buffer);
-        break;
-      }
-      case 'e':
-      {
-        sprintf(buffer,"%d\r\n", encoder_reset());
-        NU32_WriteUART3(buffer);
-        break;
-      }
-
-      case 'q':
-      {
-        setMODE(IDLE);
-        break;
-      }
-
       case 'a':
       {
         a = adc_sample_convert(7);
@@ -321,7 +293,6 @@ void __ISR(_TIMER_4_VECTOR, IPL4SOFT) motorController(void)
         NU32_WriteUART3(buffer);
         break;
       }
-
       case 'b':
       {
         a = adc_sample_convert(7);
@@ -330,24 +301,25 @@ void __ISR(_TIMER_4_VECTOR, IPL4SOFT) motorController(void)
         NU32_WriteUART3(buffer);
         break;
       }
-
-      case 'r':
+      case 'c':
       {
-        sprintf(buffer, "%d\r\n", getMODE());
+        sprintf(buffer,"%d\r\n", encoder_counts());
         NU32_WriteUART3(buffer);
         break;
       }
-
-      case 'p':
+      case 'd':
       {
-        setMODE(IDLE);
-        LATEbits.LATE0 = 0;
-        OC1RS = 0;
-        sprintf(buffer,"%d\r\n",OC1RS);
+        deg = (encoder_counts() - 32768) * 0.2;
+        sprintf(buffer,"%d\r\n", deg);
+        NU32_WriteUART3(buffer); // send encoder count to client
+        break;
+      }
+      case 'e':
+      {
+        sprintf(buffer,"%d\r\n", encoder_reset());
         NU32_WriteUART3(buffer);
         break;
       }
-
       case 'f':
       {
         setMODE(PWM);
@@ -403,16 +375,7 @@ void __ISR(_TIMER_4_VECTOR, IPL4SOFT) motorController(void)
         break;
       }
 
-      case 'l':
-      {
-        __builtin_disable_interrupts();
-        NU32_ReadUART3(buffer, BUF_SIZE);
-        sscanf(buffer, "%f", &angleuser);
-        angleerrint = 0;
-        setMODE(HOLD);
-        __builtin_enable_interrupts();
-        break;
-      }
+
       case 'k':
       {
         counter = 0;
@@ -427,9 +390,20 @@ void __ISR(_TIMER_4_VECTOR, IPL4SOFT) motorController(void)
         }
         break;
       }
+
+      case 'l':
+      {
+        __builtin_disable_interrupts();
+        NU32_ReadUART3(buffer, BUF_SIZE);
+        sscanf(buffer, "%f", &angleuser);
+        angleerrint = 0;
+        setMODE(HOLD);
+        __builtin_enable_interrupts();
+        break;
+      }
       case 'm':
       {
-       
+
         NU32_ReadUART3(buffer, BUF_SIZE);
         sscanf(buffer,"%d",&tracklength);
         for(j=0;j<tracklength;j++)
@@ -449,7 +423,7 @@ void __ISR(_TIMER_4_VECTOR, IPL4SOFT) motorController(void)
 
       case 'n':
       {
-       
+
         NU32_ReadUART3(buffer, BUF_SIZE);
         sscanf(buffer,"%d",&tracklength);
         for(j=0;j<tracklength;j++)
@@ -481,6 +455,28 @@ void __ISR(_TIMER_4_VECTOR, IPL4SOFT) motorController(void)
           sprintf(buffer, "%f %f\r\n", trackangleuser[j] , trackanglemotor[j]);
           NU32_WriteUART3(buffer);
         }
+        break;
+      }
+
+      case 'p':
+      {
+        setMODE(IDLE);
+        LATEbits.LATE0 = 0;
+        OC1RS = 0;
+        sprintf(buffer,"%d\r\n",OC1RS);
+        NU32_WriteUART3(buffer);
+        break;
+      }
+
+      case 'q':
+      {
+        setMODE(IDLE);
+        break;
+      }
+      case 'r':
+      {
+        sprintf(buffer, "%d\r\n", getMODE());
+        NU32_WriteUART3(buffer);
         break;
       }
 

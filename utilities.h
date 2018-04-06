@@ -1,6 +1,9 @@
 #ifndef UTILITIES_H
 #define UTILITIES_H
 
+#define NUMSAMPS 100
+static volatile int Waveform[NUMSAMPS];
+
 void makeWaveform(){
   int i = 0, center = 0, A = 200;
   for (i = 0; i < NUMSAMPS; ++i)

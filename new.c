@@ -1,6 +1,8 @@
 #include "NU32.h"          // config bits, constants, funcs for startup and UART
 // include other header files here
 #include <stdio.h>
+#include "encoder.h"
+#include "isense.h"
 
 #define BUF_SIZE 200
 #define VOLTS_PER_COUNT (3.3/1024)
@@ -49,25 +51,6 @@ static volatile int plotind=0;
 static volatile decctr=0;
 
 
-
-static int encoder_command(int read) { // send a command to the encoder chip
-                                       // 0 = reset count to 32,768, 1 = return the count
-  SPI4BUF = read;                      // send the command
-  while (!SPI4STATbits.SPIRBF) { ; }   // wait for the response
-  SPI4BUF;                             // garbage was transferred, ignore it
-  SPI4BUF = 5;                         // write garbage, but the read will have the data
-  while (!SPI4STATbits.SPIRBF) { ; }
-  return SPI4BUF;
-}
-
-int encoder_counts(void) {
-  return encoder_command(1);
-}
-
-int encoder_reset(void) {
-  return encoder_command(0);
-}
-
 void makeWaveform(){
 int i = 0, center = 0, A = 200;
   for (i = 0; i < NUMSAMPS; ++i)
@@ -105,24 +88,6 @@ mode getMODE() {
 }
 
 // isr for 5khz
-
-unsigned int adc_sample_convert(int pin) { // sample & convert the value on the given
-                                           // adc pin the pin should be configured as an
-                                           // analog input in AD1PCFG
-    unsigned int elapsed = 0, finish_time = 0;
-    AD1CHSbits.CH0SA = pin;                // connect chosen pin to MUXA for sampling
-    AD1CON1bits.SAMP = 1;                  // start sampling
-    elapsed = _CP0_GET_COUNT();
-    finish_time = elapsed + SAMPLE_TIME;
-    while (_CP0_GET_COUNT() < finish_time) {
-      ;                                   // sample for more than 250 ns
-    }
-    AD1CON1bits.SAMP = 0;                 // stop sampling and start converting
-    while (!AD1CON1bits.DONE) {
-      ;                                   // wait for the conversion process to finish
-    }
-    return ADC1BUF0;                      // read the buffer with the result
-}
 
 
 void __ISR(_TIMER_4_VECTOR, IPL4SOFT) motorController(void)
@@ -295,29 +260,6 @@ void __ISR(_TIMER_2_VECTOR, IPL5SOFT) Controller(void)
     //       NU32_WriteUART3(new);               cvv
     IFS0bits.T2IF = 0;                // clear CT int flag
   }
-
-
-void encoder_init(void) {
-  // SPI initialization for reading from the decoder chip
-  SPI4CON = 0;              // stop and reset SPI4
-  SPI4BUF;                  // read to clear the rx receive buffer
-  SPI4BRG = 0x4;            // bit rate to 8 MHz, SPI4BRG = 80000000/(2*desired)-1
-  SPI4STATbits.SPIROV = 0;  // clear the overflow
-  SPI4CONbits.MSTEN = 1;    // master mode
-  SPI4CONbits.MSSEN = 1;    // slave select enable
-  SPI4CONbits.MODE16 = 1;   // 16 bit mode
-  SPI4CONbits.MODE32 = 0;
-  SPI4CONbits.SMP = 1;      // sample at the end of the clock
-  SPI4CONbits.ON = 1;       // turn SPI on
-}
-
-void adc_init(void){
-AD1PCFGbits.PCFG14 = 0;                 // AN14 is an adc pin
-AD1PCFGbits.PCFG15 = 0;                 // AN15 is an adc pin
-AD1CON3bits.ADCS = 2;                   // ADC clock period is Tad = 2*(ADCS+1)*Tpb =
-                                        //                           2*3*12.5ns = 75ns
-AD1CON1bits.ADON = 1;                   // turn on A/D converter
-}
 
 
 

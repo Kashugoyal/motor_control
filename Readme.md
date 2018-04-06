@@ -1,3 +1,4 @@
+
 # Motor Control Project - Position control of a Brushed DC motor
 
 __This package demonstrates the control of a brushed DC motor with encoder feedback. We use a PIC32 microcontroller (on an NU32 board) for the position control and the interface is developed in Matlab as a menu i.e. a list of commands to choose from and send instructions to the PIC.__
@@ -56,12 +57,12 @@ A basic flowchart for the operation is given below.
 
 ### 4. Charts
 * __Current test__
-<img src="https://github.com/Kashugoyal/motor_control/blob/master/images/final.jpg?raw=true" width=70% align="center" >
+<img src="https://github.com/Kashugoyal/motor_control/blob/master/images/final.jpg?raw=true" width=70% align="center"/>
 * __Step Trajectory__
-<img src="https://github.com/Kashugoyal/motor_control/blob/master/images/track_step.jpg?raw=true" width=70% align="center" >
+<img src="https://github.com/Kashugoyal/motor_control/blob/master/images/track_step.jpg?raw=true" width=70% align="center"/>
 * __Cubic Trajetory__
-<img src="https://github.com/Kashugoyal/motor_control/blob/master/images/final_cubi.jpg?raw=true" width=70% align="center" >
-   > Blue line is the plot for desired values while orange is the obtained set of values. 
+<img src="https://github.com/Kashugoyal/motor_control/blob/master/images/final_cubi.jpg?raw=true" width=70% align="center"/>
+> Blue line is the plot for desired values while orange is the obtained set of values. 
 
 ### 5. References
 1. __[ME333 Course Website][1]__

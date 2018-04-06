@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include "encoder.h"
 #include "isense.h"
+#include "utilities.h"
 
 #define BUF_SIZE 200
 #define VOLTS_PER_COUNT (3.3/1024)
@@ -51,28 +52,6 @@ static volatile int plotind=0;
 static volatile decctr=0;
 
 
-void makeWaveform(){
-int i = 0, center = 0, A = 200;
-  for (i = 0; i < NUMSAMPS; ++i)
-  {
-    if (i<NUMSAMPS/4)
-    {
-      Waveform[i]=center+A;
-    }
-    else if(i<NUMSAMPS/2 && i>NUMSAMPS/4)
-    {
-      Waveform[i]=center-A;
-    }
-    else if(i<3*NUMSAMPS/4 && i>NUMSAMPS/2)
-    {
-      Waveform[i]=center+A;
-    }
-    else
-    {
-      Waveform[i]=center-A;
-    }
-  }
-}
 
 
 typedef enum {IDLE, PWM,ITEST,HOLD,TRACK} mode;
@@ -80,11 +59,11 @@ typedef enum {IDLE, PWM,ITEST,HOLD,TRACK} mode;
 static volatile mode MODE;
 
 void setMODE(mode newMODE) {
-    MODE = newMODE;
+  MODE = newMODE;
 }
 
 mode getMODE() {
-    return MODE;
+  return MODE;
 }
 
 // isr for 5khz
@@ -94,91 +73,78 @@ void __ISR(_TIMER_4_VECTOR, IPL4SOFT) motorController(void)
 {
 
 
-      switch (getMODE()) {
-        case HOLD:
-        {
+  switch (getMODE()) {
+    case HOLD:
+    {
          // sample and convert pin 14
-          anglemotor = (encoder_counts() - 32768) * 0.2;
-          angleerr = anglemotor - angleuser;
-          angleerrint += kim*angleerr;
-          um = kpm*(angleerr) + angleerrint + kdm*(anglemotor - prevangle);
-          if(um > 400.0){um = 400.0;}
-          else if(um < -400){um = -400;}
-          prevangle = anglemotor;
-          // char new[100];
-          // sprintf(new, "%f \t %f\r \n", angleerr,um);
-          // NU32_WriteUART3(new);
-          break;
-        }
-        case TRACK:
-        {
-          if(trackcount<tracklength)
-          {
-          trackanglemotor[trackcount] = (encoder_counts() - 32768) * 0.2;
-          trackangleerr = trackanglemotor[trackcount] - trackangleuser[trackcount];
-          angleerrint += kim*trackangleerr;
-          umtrack = kpm*(trackangleerr) + angleerrint + kdm*(trackanglemotor[trackcount] - prevangle);
-          if(umtrack > 400.0){umtrack = 400.0;}
-          else if(umtrack < -400){umtrack = -400;}
-          prevangle = trackanglemotor[trackcount];
-          trackcount++;
-        }
-          else
-          {
-            trackcount = 0;
-            angleuser = (float)trackangleuser[tracklength-1];
-            angleerrint = 0;
-            prevangle = angleuser;
-            setMODE(HOLD);
-          }
-          break;
-        }
-
-        default:
-        {
-          break;
-        }
+      anglemotor = (encoder_counts() - 32768) * 0.2;
+      angleerr = anglemotor - angleuser;
+      angleerrint += kim*angleerr;
+      um = kpm*(angleerr) + angleerrint + kdm*(anglemotor - prevangle);
+      if(um > 400.0){um = 400.0;}
+      else if(um < -400){um = -400;}
+      prevangle = anglemotor;
+      break;
+    }
+    case TRACK:
+    {
+      if(trackcount<tracklength)
+      {
+        trackanglemotor[trackcount] = (encoder_counts() - 32768) * 0.2;
+        trackangleerr = trackanglemotor[trackcount] - trackangleuser[trackcount];
+        angleerrint += kim*trackangleerr;
+        umtrack = kpm*(trackangleerr) + angleerrint + kdm*(trackanglemotor[trackcount] - prevangle);
+        if(umtrack > 400.0){umtrack = 400.0;}
+        else if(umtrack < -400){umtrack = -400;}
+        prevangle = trackanglemotor[trackcount];
+        trackcount++;
       }
-    IFS0bits.T4IF = 0;                // clear CT int flag
-}
+      else
+      {
+        trackcount = 0;
+        angleuser = (float)trackangleuser[tracklength-1];
+        angleerrint = 0;
+        prevangle = angleuser;
+        setMODE(HOLD);
+      }
+      break;
+    }
 
-void __ISR(_TIMER_2_VECTOR, IPL5SOFT) Controller(void)
-{
+    default:
+    {
+      break;
+    }
+  }
+    IFS0bits.T4IF = 0;                // clear CT int flag
+  }
+
+  void __ISR(_TIMER_2_VECTOR, IPL5SOFT) Controller(void)
+  {
 
         adcval =2* adc_sample_convert(7) - 1023;    // sample and convert pin 14
 
         switch (getMODE()) {
-        case IDLE:
-        {
-         OC1RS =0;
-         angleerr = 0;
+          case IDLE:
+          {
+           OC1RS =0;
+           angleerr = 0;
 
-          anglemotor = 0;
-          err = 0;
-          break;
-        }
+           anglemotor = 0;
+           err = 0;
+           break;
+         }
 
-        case HOLD:
-        {
-
-        err = adcval - um;
-        errint += err;
-        u = kp*(err) + ki*(errint);
-        // char new[100];
-        // sprintf(new,"%d \r\n", err);
-        // NU32_WriteUART3(new);
-        // preverr = err;
-
-        unew = u;
-
-
-        // unew = u + 50;
-        if(unew > 100.0){unew = 100.0;}
-        else if(unew < -100){unew = -100;}
-
-        pwm = unew;
-        OC1RS = (unsigned int)abs(pwm) * 20;
-        if(pwm<0){
+         case HOLD:
+         {
+          err = adcval - um;
+          errint += err;
+          u = kp*(err) + ki*(errint);
+          unew = u;
+          if(unew > 100.0){unew = 100.0;}
+          else if(unew < -100){unew = -100;}
+          pwm = unew;
+          OC1RS = (unsigned int)abs(pwm) * 20;
+          if(pwm<0){
           LATEbits.LATE0 = 1; // setting motor direction, phase
         }
         else {
@@ -187,23 +153,16 @@ void __ISR(_TIMER_2_VECTOR, IPL5SOFT) Controller(void)
         break;
       }
 
-        case  ITEST:
-       {
+      case  ITEST:
+      {
         err = - Waveform[counter] + adcval;
         errint += err;
         u = kp*(err) + ki*(errint);
-
-        // preverr = err;
-
         unew = u;
-
-
-        // unew = u + 50;
         if(unew > 100.0){unew = 100.0;}
         else if(unew < -100){unew = -100;}
 
         pwm = unew;
-        // char new[100];
 
         OC1RS = (unsigned int)abs(pwm) * 20;
         if(pwm<0){
@@ -226,23 +185,22 @@ void __ISR(_TIMER_2_VECTOR, IPL5SOFT) Controller(void)
         }
         break;
       }
-     
+      
       case TRACK:
       {
 
-      err = adcval - umtrack;
-      errint += err;
-      u = kp*(err) + ki*(errint);
-      unew = u;
+        err = adcval - umtrack;
+        errint += err;
+        u = kp*(err) + ki*(errint);
+        unew = u;
 
 
-      // unew = u + 50;
-      if(unew > 100.0){unew = 100.0;}
-      else if(unew < -100){unew = -100;}
+        if(unew > 100.0){unew = 100.0;}
+        else if(unew < -100){unew = -100;}
 
-      pwm = unew;
-      OC1RS = (unsigned int)abs(pwm) * 20;
-      if(pwm<0){
+        pwm = unew;
+        OC1RS = (unsigned int)abs(pwm) * 20;
+        if(pwm<0){
         LATEbits.LATE0 = 1; // setting motor direction, phase
       }
       else {
@@ -250,27 +208,24 @@ void __ISR(_TIMER_2_VECTOR, IPL5SOFT) Controller(void)
       }
       break;
     }
-      default:
-      {
-       break;
-      }
-    }
-    // char new[100];
-    //       sprintf(new,"f\r\n");
-    //       NU32_WriteUART3(new);               cvv
+    default:
+    {
+     break;
+   }
+ }
     IFS0bits.T2IF = 0;                // clear CT int flag
   }
 
 
 
 
-int main()
-{
-  int j;
-  float kptemp=0, kitemp=0;
-  float kpmtemp = 0, kdmtemp = 0, kimtemp=0;
-  unsigned int a = 0;
-  char buffer[BUF_SIZE];
+  int main()
+  {
+    int j;
+    float kptemp=0, kitemp=0;
+    float kpmtemp = 0, kdmtemp = 0, kimtemp=0;
+    unsigned int a = 0;
+    char buffer[BUF_SIZE];
   NU32_Startup(); // cache on, min flash wait, interrupts on, LED/button init, UART init
   encoder_init();
   adc_init();
@@ -299,7 +254,7 @@ int main()
   IFS0bits.T4IF = 0;
   IPC4bits.T4IP = 4;
   T4CONbits.ON =1;
- __builtin_enable_interrupts();
+  __builtin_enable_interrupts();
 
 
 
@@ -459,19 +414,19 @@ int main()
         break;
       }
       case 'k':
+      {
+        counter = 0;
+        setMODE(ITEST);
+        sprintf(buffer,"%d\n",NUMSAMPS);
+        NU32_WriteUART3(buffer);
+        while (counter < 99){;}
+        for (j = 0; j < NUMSAMPS; j++)
         {
-          counter = 0;
-          setMODE(ITEST);
-          sprintf(buffer,"%d\n",NUMSAMPS);
+          sprintf(buffer, "%d %d\n",Waveform[j],ref[j]);
           NU32_WriteUART3(buffer);
-          while (counter < 99){;}
-          for (j = 0; j < NUMSAMPS; j++)
-          {
-            sprintf(buffer, "%d %d\n",Waveform[j],ref[j]);
-            NU32_WriteUART3(buffer);
-          }
-          break;
         }
+        break;
+      }
       case 'm':
       {
        
@@ -512,14 +467,6 @@ int main()
         break;
       }
 
-      case 'z':
-      {
-     sprintf(buffer, "%f %f %f\r\n", trackangleuser[tracklength-1],(float)trackangleuser[tracklength-1],(float)trackangleuser[tracklength-1]* 1.00);
-          // sprintf(buffer, "%f\r\n", angleuser);
-          NU32_WriteUART3(buffer);
-        
-        break;
-      }      
       case 'o':
       {
         angleerrint = 0;

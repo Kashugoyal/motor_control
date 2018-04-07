@@ -67,7 +67,11 @@ A basic flowchart for the operation is given below.
 
 > Blue line is the plot for desired values while orange is the obtained set of values. 
 
-### 5. References
+### 5. Demo
+The screenshot of the running demo is shown below. The full demo can be seen [here](https://youtu.be/BqZI2Hvg3Kw).
+<img src="https://github.com/Kashugoyal/motor_control/blob/master/images/demo.png?raw=true" width=70% align="center"/>
+
+### 6. References
 1. __[ME333 Course Website][1]__
 2. __[NU32 development board and book][2]__
 3. __[NU32 Software][3]__

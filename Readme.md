@@ -69,7 +69,7 @@ A basic flowchart for the operation is given below.
 
 ### 5. Demo
 The screenshot of the running demo is shown below. The full demo can be seen [here](https://youtu.be/BqZI2Hvg3Kw).
-<img src="https://github.com/Kashugoyal/motor_control/blob/master/images/demo.png?raw=true" width=70% align="center"/>
+[!<img src="https://github.com/Kashugoyal/motor_control/blob/master/images/demo.png?raw=true" width=70% align="center"/>](https://youtu.be/BqZI2Hvg3Kw)
 
 ### 6. References
 1. __[ME333 Course Website][1]__
